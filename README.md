@@ -1,1 +1,1 @@
-"# bamazon" 
+-customer can alter stock quantity by providing id and quantity of item they'd like to buy, provided that quantity exists. 
