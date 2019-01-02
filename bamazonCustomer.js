@@ -154,7 +154,7 @@ function QuestionOneHandling(resultZero) {
                 else {
                     resultZero[0].stock_quantity = resultZero[0].stock_quantity - answerOne.quantity;  //updating locally
                     UpdateStock({ stock_quantity: resultZero[0].stock_quantity }, { item_id: resultZero[0].item_id }); //updating globally or in database
-                    console.log("\nHere is the updated stock:");
+                    console.log("\nYour transaction is complete!\nHere is the updated stock:");
                     printItem(resultZero);
                 }
 

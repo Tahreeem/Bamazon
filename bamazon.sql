@@ -13,7 +13,7 @@ CREATE TABLE products(
   price DECIMAL(10,2),
   stock_quantity INTEGER,
   PRIMARY KEY (item_id),
-  UNIQUE INDEX `product_name_UNIQUE` (`position` ASC) VISIBLE
+  UNIQUE INDEX `product_name_UNIQUE` (`item_id` ASC) VISIBLE
 );
 
 -- Creates 10 new rows; Dummy Data --
