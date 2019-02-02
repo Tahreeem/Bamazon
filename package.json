@@ -5,6 +5,9 @@
   "main": "bamazonCustomer.js",
   "dependencies": {
     "dotenv": "^6.2.0",
+    "firebase": "^5.8.0",
+    "firebase-admin": "^6.5.0",
+    "firebase-auth-node": "^1.0.3",
     "geoip-lite": "^1.3.5",
     "inquirer": "^6.2.1",
     "moment": "^2.23.0",

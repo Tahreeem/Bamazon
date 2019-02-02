@@ -6,32 +6,36 @@ var sun = require('sun-time');
 var geoip = require('geoip-lite');
 const publicIp = require('public-ip');
 var os = require('os');
+const serviceAccount = require("./ServiceAccountKey.json");
+const admin = require('firebase-admin');
+var firebase = require('firebase');
+
 
 //_______________________________________________________________________
 
 var connection = mysql.createConnection({
-    host: process.env.DB_HOST,
-    port: process.env.DB_PORT,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASS,
+    host: process.env.SQL_HOST,
+    port: process.env.SQL_PORT,
+    user: process.env.SQL_USER,
+    password: process.env.SQL_PASS,
     database: "bamazon_db"
 });
 
 
 var questions =
-    [{
+    [{ //question 0
         name: "productID",
         type: "input",
         message: "Please enter a product ID",
         validate: validateNumber
     },
-    {
+    { //question 1
         name: "quantity",
         type: "input",
         message: "What is the quantity of the product you would like to buy?",
         validate: validateNumber
     },
-    {
+    { //question 2
         name: "managerChoice",
         type: "rawlist",
         message: "Please select what you would like to do...",
@@ -43,29 +47,51 @@ var questions =
             'Add New Product'
         ]
     },
-    {
+    { //question 3
         name: "insertProductName",
         type: "input",
         message: "Please enter the name of the product you would like added to the inventory\n"
 
     },
-    {
+    { //question 4
         name: "insertDepartmentName",
         type: "input",
         message: "Please enter the name of the department this product falls under\n"
     },
-    {
+    { //question 5
         name: "insertPrice",
         type: "input",
         message: "Please enter the price for this product\n",
         validate: validateNumber
     },
-    {
+    { //question 6
         name: "insertStockQuantity",
         type: "input",
         message: "Please enter the quantity to add for this product\n",
         validate: validateNumber
-    }];
+    },
+    { //question 7
+        name: "login",
+        type: "rawlist",
+        //message: "How would you like to use our services today?\n",
+        choices: [
+            'Log in to an existing account',
+            'Sign up for a new account',
+            new inquirer.Separator(),
+            'Continue as a Guest'
+        ]
+    },
+    { //question 8
+        name: "loginAccount",
+        type: "input",
+        message: "Please enter the email address or phone number associated with your account\n",
+    },
+    { //question 9
+        name: "loginAccount",
+        type: "input",
+        message: "Please enter the email address or phone number associated with your account\n",
+    }
+    ];
 
 
 function greetings() {
@@ -79,7 +105,7 @@ function greetings() {
             return sun(lat, long);
         })()
             .then(function (riseSet) {
-                var rise = moment(riseSet.rise,"HH:mm");
+                var rise = moment(riseSet.rise, "HH:mm");
                 var set = moment(riseSet.set, "HH:mm");
                 var currentTime = moment();
                 var noon = moment("12:00", "HH:mm");
@@ -87,10 +113,10 @@ function greetings() {
 
                 var user = os.userInfo().username;
 
-                if ( currentTime.isAfter(rise) && currentTime.isBefore(noon) ) {
+                if (currentTime.isAfter(rise) && currentTime.isBefore(noon)) {
                     console.log("\nGood Morning " + user);
                 }
-                else if (currentTime.isAfter(noon) && currentTime.isBefore(set) ) {
+                else if (currentTime.isAfter(noon) && currentTime.isBefore(set)) {
                     console.log("\nGood Afternoon " + user);
                 }
                 else if (currentTime.isAfter(set) && currentTime.isBefore(midnight)) {
@@ -99,7 +125,7 @@ function greetings() {
                 else console.log("\nGreetings " + user);
 
                 resolve();
-           });
+            });
     });
 }
 
@@ -160,7 +186,7 @@ function printProduct(products) {
 }
 
 
-function getProducts(conditions) {  
+function getProducts(conditions) {
 
     return new Promise(resolve => {
 
@@ -250,9 +276,9 @@ function questionOneHandling(resultZero) {
                 else {
                     resultZero[0].stock_quantity -= answerOne.quantity;  //updating locally
                     updateStock(  //updating globally or in database
-                        {stock_quantity: resultZero[0].stock_quantity},
+                        { stock_quantity: resultZero[0].stock_quantity },
                         { item_id: resultZero[0].item_id }
-                    ); 
+                    );
                     console.log(`\nYour purchase is complete! This purchase cost you $${resultZero[0].price * answerOne.quantity}.`);
                     console.log("Here is the updated stock:");
                     resolve(printProduct(resultZero));
@@ -260,7 +286,7 @@ function questionOneHandling(resultZero) {
                 }
             });
     });
-}  //name: "quantity"
+} //question name: "quantity"
 
 function questionZeroHandling() {
 
@@ -282,7 +308,7 @@ function questionZeroHandling() {
                     });
             });
     });
-} //name: "productID"
+} //question name: "productID"
 
 function caseThreeHandling(resultSix) {
 
@@ -307,8 +333,97 @@ function disconnect() {
 }
 
 
+function loginFlow() {
+
+    return new Promise(resolve => {
+
+        console.log("\n");
+
+        askQuestions(questions[7])
+            .then(function (answerSeven) {
+
+
+                if (answerSeven.login != 'Continue as a Guest') {
+
+                    var databaseURL = process.env.FIREBASE_DB_URL;
+
+                    admin.initializeApp({
+                        credential: admin.credential.cert(serviceAccount),
+                        databaseURL: databaseURL
+                    });
+
+                    firebase.initializeApp({
+                        apiKey: process.env.FIREBASE_API_KEY,
+                        databaseURL: databaseURL
+                    });
+
+
+                    if (answerSeven.login == 'Log in to an existing account') {
+
+                        askQuestions(questions[8])   //question name: "loginAccount"
+                            .then(function (accountEmailOrPhoneNum) {
+
+                                if (validateEmail(accountEmailOrPhoneNum)) {
+
+                                    admin.auth().getUserByEmail(accountEmailOrPhoneNum)
+                                        .then(function (userRecord) {
+                                            // See the UserRecord reference doc for the contents of userRecord.
+                                            console.log("Successfully fetched user data:", userRecord.toJSON());
+                                        })
+                                        .catch(function (error) {
+                                            console.log("Error fetching user data:", error);
+                                        });
+
+                                }
+                                else if (validatePhoneNum(accountEmailOrPhoneNum)) { }
+                                else {
+                                    console.log("You have entered an invalid email address or phone number");
+                                }
+
+                            });
+
+
+
+
+
+
+
+                    }
+                    else if (answerSeven.login == 'Sign up for an account') { }
+
+
+                }
+                else { }
+
+
+
+
+
+                console.log(answerSeven.login != 'Continue as a Guest');
+                resolve(answerSeven);
+            });
+    });
+} //question name: "login"
+
+
+function validateEmail(inputText) {
+    var mailFormat = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
+    if (inputText.match(mailFormat)) return true;
+    else return false;
+}
+
+function validatePhoneNum(inputText) {
+    var phoneNumFormat = /^\(?([0-9]{3})\)?[-. ]?([0-9]{3})[-. ]?([0-9]{4})$/;
+    if (inputText.match(phoneNumFormat)) return true;
+    else return false;
+}
 
 module.exports = {
+    validateEmail: validateEmail,
+    validatePhoneNum: validatePhoneNum,
+    loginFlow: loginFlow,
+    admin: admin,
+    firebase: firebase,
     connection: connection,
     questions: questions,
     greetings: greetings,
