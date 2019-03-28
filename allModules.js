@@ -1,14 +1,6 @@
 ﻿var mysql = require("mysql");
 var inquirer = require("inquirer");
 require('dotenv').config();
-var moment = require('moment');
-var sun = require('sun-time');
-var geoip = require('geoip-lite');
-const publicIp = require('public-ip');
-var os = require('os');
-const serviceAccount = require("./ServiceAccountKey.json");
-const admin = require('firebase-admin');
-var firebase = require('firebase');
 
 
 //_______________________________________________________________________
@@ -51,7 +43,6 @@ var questions =
         name: "insertProductName",
         type: "input",
         message: "Please enter the name of the product you would like added to the inventory\n"
-
     },
     { //question 4
         name: "insertDepartmentName",
@@ -69,65 +60,8 @@ var questions =
         type: "input",
         message: "Please enter the quantity to add for this product\n",
         validate: validateNumber
-    },
-    { //question 7
-        name: "login",
-        type: "rawlist",
-        //message: "How would you like to use our services today?\n",
-        choices: [
-            'Log in to an existing account',
-            'Sign up for a new account',
-            new inquirer.Separator(),
-            'Continue as a Guest'
-        ]
-    },
-    { //question 8
-        name: "loginAccount",
-        type: "input",
-        message: "Please enter the email address or phone number associated with your account\n",
-    },
-    { //question 9
-        name: "loginAccount",
-        type: "input",
-        message: "Please enter the email address or phone number associated with your account\n",
     }
     ];
-
-
-function greetings() {
-
-    return new Promise(resolve => {
-
-        (async function () {
-            var geo = geoip.lookup(await publicIp.v4());
-            var lat = Number(geo.ll[0]);
-            var long = Number(geo.ll[1]);
-            return sun(lat, long);
-        })()
-            .then(function (riseSet) {
-                var rise = moment(riseSet.rise, "HH:mm");
-                var set = moment(riseSet.set, "HH:mm");
-                var currentTime = moment();
-                var noon = moment("12:00", "HH:mm");
-                var midnight = moment("24:00", "HH:mm");
-
-                var user = os.userInfo().username;
-
-                if (currentTime.isAfter(rise) && currentTime.isBefore(noon)) {
-                    console.log("\nGood Morning " + user);
-                }
-                else if (currentTime.isAfter(noon) && currentTime.isBefore(set)) {
-                    console.log("\nGood Afternoon " + user);
-                }
-                else if (currentTime.isAfter(set) && currentTime.isBefore(midnight)) {
-                    console.log("\nGood Evening " + user);
-                }
-                else console.log("\nGreetings " + user);
-
-                resolve();
-            });
-    });
-}
 
 
 function validateNumber(value) {
@@ -140,6 +74,8 @@ function validateNumber(value) {
         return false;
     }
 }
+
+
 
 
 function printAllProducts() {
@@ -184,6 +120,8 @@ function printProduct(products) {
         resolve();
     });
 }
+
+
 
 
 function getProducts(conditions) {
@@ -250,6 +188,8 @@ function insertProduct(parameters) {
 }
 
 
+
+
 function askQuestions(whichQuestions) {
 
     return new Promise(resolve => {
@@ -270,7 +210,7 @@ function questionOneHandling(resultZero) {
             .then(function (answerOne) {
 
                 if (answerOne.quantity > resultZero[0].stock_quantity) {
-                    console.log(`Insufficient quantity of product available. Only ${resultZero[0].stock_quantity} units available. Please enter a lower number...`);
+                    console.log(`Insufficient quantity of product available: only ${resultZero[0].stock_quantity} units available. Please enter a lower number...`);
                     resolve(questionOneHandling(resultZero));
                 }
                 else {
@@ -317,7 +257,7 @@ function caseThreeHandling(resultSix) {
         askQuestions(questions[6])
             .then(function (answerSix) {
 
-                resultSix[0].stock_quantity += answerSix.quantity;  //updating locally
+                resultSix[0].stock_quantity += Number(answerSix.insertStockQuantity);  //updating locally
                 updateStock({ stock_quantity: resultSix[0].stock_quantity }, { item_id: resultSix[0].item_id }); //updating globally or in database
                 console.log("\nThe inventory has been updated!");
                 console.log("Here is the updated stock:");
@@ -327,115 +267,27 @@ function caseThreeHandling(resultSix) {
 }
 
 
+
+
 function disconnect() {
     connection.end();
     process.exit();
 }
 
-
-function loginFlow() {
-
-    return new Promise(resolve => {
-
-        console.log("\n");
-
-        askQuestions(questions[7])
-            .then(function (answerSeven) {
-
-
-                if (answerSeven.login != 'Continue as a Guest') {
-
-                    var databaseURL = process.env.FIREBASE_DB_URL;
-
-                    admin.initializeApp({
-                        credential: admin.credential.cert(serviceAccount),
-                        databaseURL: databaseURL
-                    });
-
-                    firebase.initializeApp({
-                        apiKey: process.env.FIREBASE_API_KEY,
-                        databaseURL: databaseURL
-                    });
-
-
-                    if (answerSeven.login == 'Log in to an existing account') {
-
-                        askQuestions(questions[8])   //question name: "loginAccount"
-                            .then(function (accountEmailOrPhoneNum) {
-
-                                if (validateEmail(accountEmailOrPhoneNum)) {
-
-                                    admin.auth().getUserByEmail(accountEmailOrPhoneNum)
-                                        .then(function (userRecord) {
-                                            // See the UserRecord reference doc for the contents of userRecord.
-                                            console.log("Successfully fetched user data:", userRecord.toJSON());
-                                        })
-                                        .catch(function (error) {
-                                            console.log("Error fetching user data:", error);
-                                        });
-
-                                }
-                                else if (validatePhoneNum(accountEmailOrPhoneNum)) { }
-                                else {
-                                    console.log("You have entered an invalid email address or phone number");
-                                }
-
-                            });
-
-
-
-
-
-
-
-                    }
-                    else if (answerSeven.login == 'Sign up for an account') { }
-
-
-                }
-                else { }
-
-
-
-
-
-                console.log(answerSeven.login != 'Continue as a Guest');
-                resolve(answerSeven);
-            });
-    });
-} //question name: "login"
-
-
-function validateEmail(inputText) {
-    var mailFormat = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
-    if (inputText.match(mailFormat)) return true;
-    else return false;
-}
-
-function validatePhoneNum(inputText) {
-    var phoneNumFormat = /^\(?([0-9]{3})\)?[-. ]?([0-9]{3})[-. ]?([0-9]{4})$/;
-    if (inputText.match(phoneNumFormat)) return true;
-    else return false;
-}
+//_______________________________________________________________________
 
 module.exports = {
-    validateEmail: validateEmail,
-    validatePhoneNum: validatePhoneNum,
-    loginFlow: loginFlow,
-    admin: admin,
-    firebase: firebase,
-    connection: connection,
-    questions: questions,
-    greetings: greetings,
-    validateNumber: validateNumber,
-    printAllProducts: printAllProducts,
-    printProduct: printProduct,
-    getProducts: getProducts,
-    updateStock: updateStock,
-    insertProduct: insertProduct,
-    askQuestions: askQuestions,
-    questionOneHandling: questionOneHandling,
-    questionZeroHandling: questionZeroHandling,
-    caseThreeHandling: caseThreeHandling,
-    disconnect: disconnect
+    connection,
+    questions,
+    validateNumber,
+    printAllProducts,
+    printProduct,
+    getProducts,
+    updateStock,
+    insertProduct,
+    askQuestions,
+    questionOneHandling,
+    questionZeroHandling,
+    caseThreeHandling,
+    disconnect
 }; 

@@ -1,14 +1,14 @@
-
 var allModules = require('./allModules.js');
+({ greetings } = require('./greetingsModule.js'));
 
 //_______________________________________________________________________
 
 allModules.connection.connect(function (error) {
     if (error) throw error;
 
-    
 
-    allModules.greetings()
+
+    greetings()
         .then(function () {
 
             console.log("This is your Bamazon Manager Portal...\n\n");
