@@ -112,6 +112,33 @@ function loginFlow() {
         });
     */
 
+
+    
+    // This code below can be used if the custom token method was wanted for creating or authenticating users
+    /*
+    admin.auth().createCustomToken(uid)
+        .then((customToken) => {
+            customToken = customToken;
+            console.log(customToken);
+
+
+            firebase.auth().signInWithCustomToken(String(customToken))
+                .catch(function (error) {
+                    var errorCode = error.code;
+                    var errorMessage = error.message;
+                    console.log("errorMessage: " + errorMessage);
+                }).then(() => {
+                    var user = admin.auth().currentUser;
+                    if (user) {
+                        console.log("User is signed in.");
+                    } else {
+                        console.log("No user is signed in");
+                    }
+                });
+
+        });
+    */
+
 }
 
 
