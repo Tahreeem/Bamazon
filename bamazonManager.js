@@ -1,5 +1,5 @@
 var allModules = require('./allModules.js');
-({ loginFlow } = require('./loginModule.js'));
+var loginModule = require('./loginModule.js');
 ({ greetings } = require('./greetingsModule.js'));
 
 //_______________________________________________________________________
@@ -9,11 +9,13 @@ allModules.connection.connect(function (error) {
 
 
 
-    greetings().then(() => {
+    loginModule.questions[0].choices.splice(2, 3);
 
-        return loginFlow().then(() => {
+    greetings()
+        .then(loginModule.loginFlow)
+        .then(() => {
 
-            console.log("Welcome back to Bamazon Manager Portal!\n\n");
+            console.log("Welcome to Bamazon Manager Portal...\n\n");
 
             allModules.askQuestions(allModules.questions[2])
                 .then(function (answerTwo) {
@@ -42,11 +44,9 @@ allModules.connection.connect(function (error) {
 
                         case "Add to Inventory":
                             allModules.questionZeroHandling()
-                                .then(function (resultZero) {
+                                .then(allModules.caseThreeHandling)
+                                .then(allModules.disconnect);
 
-                                    allModules.caseThreeHandling(resultZero)
-                                        .then(allModules.disconnect);
-                                });
                             break;
 
                         case "Add New Product":
@@ -65,13 +65,12 @@ allModules.connection.connect(function (error) {
                                     department_name: answers.insertDepartmentName,
                                     price: answers.insertPrice,
                                     stock_quantity: answers.insertStockQuantity
-                                }).then(allModules.disconnect);
+                                })
+                                    .then(allModules.disconnect);
                             });
                             break;
-
                     }
-                });
 
+                });
         });
-    });
 });

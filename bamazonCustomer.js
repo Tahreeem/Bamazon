@@ -10,25 +10,20 @@ allModules.connection.connect(function (error) {
 
 
 
-    greetings().then(() => {
-
-        return loginFlow().then(() => {
+    greetings()
+        .then(loginFlow)
+        .then(() => {
 
             console.log("Welcome to Bamazon Marketplace!");
             console.log("We have a unique selection of products for you to consider buying...\n\n");
 
-            return allModules.printAllProducts().then(() => {
+            return allModules.printAllProducts()
+                .then(allModules.questionZeroHandling)
+                .then(allModules.questionOneHandling)
+                .then(allModules.disconnect);
 
-                return allModules.questionZeroHandling()
-                    .then(function (resultZero) {
-
-                        return allModules.questionOneHandling(resultZero)
-                            .then(allModules.disconnect);
-                    });
-
-            });
         });
-    });
+
 
 });
 

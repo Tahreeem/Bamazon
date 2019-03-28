@@ -325,5 +325,6 @@ function accountExistsNotSignUp(error) {
 //_______________________________________________________________________
 
 module.exports = {
-    loginFlow
+    loginFlow,
+    questions
 }; 
