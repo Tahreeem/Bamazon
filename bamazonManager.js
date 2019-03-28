@@ -1,4 +1,5 @@
 var allModules = require('./allModules.js');
+({ loginFlow } = require('./loginModule.js'));
 ({ greetings } = require('./greetingsModule.js'));
 
 //_______________________________________________________________________
@@ -8,10 +9,11 @@ allModules.connection.connect(function (error) {
 
 
 
-    greetings()
-        .then(function () {
+    greetings().then(() => {
 
-            console.log("This is your Bamazon Manager Portal...\n\n");
+        return loginFlow().then(() => {
+
+            console.log("Welcome back to Bamazon Manager Portal!\n\n");
 
             allModules.askQuestions(allModules.questions[2])
                 .then(function (answerTwo) {
@@ -69,5 +71,7 @@ allModules.connection.connect(function (error) {
 
                     }
                 });
+
         });
+    });
 });

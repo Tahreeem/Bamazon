@@ -94,6 +94,7 @@ function loginFlow() {
                 return signUp();
             }
             else if (loginChoice.login == 'Continue as a Guest') {
+                console.log("\n\n");
             }
 
         });
@@ -212,7 +213,7 @@ function accountSignIn() {
             return firebase.auth().signInWithEmailAndPassword(String(user.email), password)
                 .then((userRecord) => {
                     //if (userRecord) console.log("User is signed in.\n" + JSON.stringify(userRecord)); //for debugging
-                    console.log("You are now signed in!");
+                    console.log("You are now signed in!\n\n\n");
                 })
                 .catch(function (error) {  //this block handles incorrect password entries
                     //console.log(error.message); //for debugging; 
@@ -240,9 +241,10 @@ function signUp() {
                     password: password
                 })
                     .then(function (userRecord) {
-                        console.log("Successfully created new user:\n");
+                        console.log("\n\nSuccessfully created new user:\n");
                         console.log("Email: " + userRecord.email);
                         userRecord.phoneNumber ? console.log("Phone Number: " + userRecord.phoneNumber) : null;
+                        console.log("\n\n");
                     })
                     .catch(function (error) {
                         //errors already handled at validations step for answers to questions
