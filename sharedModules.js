@@ -14,6 +14,8 @@ var connection = mysql.createConnection({
 });
 
 
+
+
 var questions =
     [{ //question 0
         name: "productID",
@@ -42,36 +44,51 @@ var questions =
     { //question 3
         name: "insertProductName",
         type: "input",
-        message: "Please enter the name of the product you would like added to the inventory\n"
+        message: "Please enter the name of the product you would like added to the inventory"
     },
     { //question 4
         name: "insertDepartmentName",
         type: "input",
-        message: "Please enter the name of the department this product falls under\n"
+        message: "Please enter the name of the department this product falls under"
     },
     { //question 5
         name: "insertPrice",
         type: "input",
-        message: "Please enter the price for this product\n",
-        validate: validateNumber
+        message: "Please enter the price for this product",
+        validate: validatePrice
     },
     { //question 6
         name: "insertStockQuantity",
         type: "input",
-        message: "Please enter the quantity to add for this product\n",
+        message: "Please enter the quantity to add for this product",
         validate: validateNumber
+    },
+    { //question 7
+        name: "customerRepeat",
+        type: "confirm",
+        message: "Would you like to perform another transaction?"
+    },
+    { //question 8
+        name: "managerRepeat",
+        type: "confirm",
+        message: "Would you like to do anything else?"
     }
     ];
 
 
+
+
 function validateNumber(value) {
     if (!isNaN(value) && value % 1 == 0 && parseInt(value) >= 0) return true;
-    else if (parseInt(value) == 0) {
-        console.log("Zero it is...");
-    }
     else {
-        console.log("\nPlease enter a valid quantity\n");
-        return false;
+        console.log("\nPlease enter a valid (positive whole) number\n");
+    }
+}
+
+function validatePrice(value) {
+    if (!isNaN(value) && parseInt(value) >= 0) return true;
+    else {
+        console.log("\nPlease enter a valid (positive) number\n");
     }
 }
 
@@ -80,7 +97,7 @@ function validateNumber(value) {
 
 function printAllProducts() {
 
-    console.log("Here are all the products:");
+    console.log("\nHere are all the products:");
 
     return new Promise(resolve => {
 
@@ -115,7 +132,6 @@ function printProduct(products) {
             console.log("Stock Quantity : " + currentProduct.stock_quantity);
             console.log("____________________________________");
         });
-
 
         resolve();
     });
@@ -202,31 +218,8 @@ function askQuestions(whichQuestions) {
 
 }
 
-function questionOneHandling(resultZero) {
 
-    return new Promise(resolve => {
 
-        askQuestions(questions[1])
-            .then(function (answerOne) {
-
-                if (answerOne.quantity > resultZero[0].stock_quantity) {
-                    console.log(`Insufficient quantity of product available: only ${resultZero[0].stock_quantity} units available. Please enter a lower number...`);
-                    resolve(questionOneHandling(resultZero));
-                }
-                else {
-                    resultZero[0].stock_quantity -= answerOne.quantity;  //updating locally
-                    updateStock(  //updating globally or in database
-                        { stock_quantity: resultZero[0].stock_quantity },
-                        { item_id: resultZero[0].item_id }
-                    );
-                    console.log(`\nYour purchase is complete! This purchase cost you $${resultZero[0].price * answerOne.quantity}.`);
-                    console.log("Here is the updated stock:");
-                    resolve(printProduct(resultZero));
-
-                }
-            });
-    });
-} //question name: "quantity"
 
 function questionZeroHandling() {
 
@@ -250,22 +243,6 @@ function questionZeroHandling() {
     });
 } //question name: "productID"
 
-function caseThreeHandling(resultSix) {
-
-    return new Promise(resolve => {
-
-        askQuestions(questions[6])
-            .then(function (answerSix) {
-
-                resultSix[0].stock_quantity += Number(answerSix.insertStockQuantity);  //updating locally
-                updateStock({ stock_quantity: resultSix[0].stock_quantity }, { item_id: resultSix[0].item_id }); //updating globally or in database
-                console.log("\nThe inventory has been updated!");
-                console.log("Here is the updated stock:");
-                resolve(printProduct(resultSix));
-            });
-    });
-}
-
 
 
 
@@ -279,15 +256,12 @@ function disconnect() {
 module.exports = {
     connection,
     questions,
-    validateNumber,
     printAllProducts,
     printProduct,
     getProducts,
     updateStock,
     insertProduct,
     askQuestions,
-    questionOneHandling,
     questionZeroHandling,
-    caseThreeHandling,
     disconnect
 }; 

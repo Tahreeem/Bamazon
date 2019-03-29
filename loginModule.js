@@ -75,7 +75,9 @@ var questions =
         },
     ];
 
-var user = "";
+var userEmail = ""; /* accountSignIn() uses this;
+otherise not possible to sign in using phone number in accountSignIn;
+this variable is updated through emailExists which is cb1 for phoneExistence and emailExistence */
 
 
 
@@ -95,6 +97,7 @@ function loginFlow() {
             }
             else if (loginChoice.login == 'Continue as a Guest') {
                 console.log("\n\n");
+                return "guest";
             }
 
         });
@@ -210,10 +213,12 @@ function accountSignIn() {
 
             password = answers["password"];
 
-            return firebase.auth().signInWithEmailAndPassword(String(user.email), password)
+            return firebase.auth().signInWithEmailAndPassword(userEmail, password)
                 .then((userRecord) => {
                     //if (userRecord) console.log("User is signed in.\n" + JSON.stringify(userRecord)); //for debugging
                     console.log("You are now signed in!\n\n\n");
+
+                    return userRecord;
                 })
                 .catch(function (error) {  //this block handles incorrect password entries
                     //console.log(error.message); //for debugging; 
@@ -245,6 +250,8 @@ function signUp() {
                         console.log("Email: " + userRecord.email);
                         userRecord.phoneNumber ? console.log("Phone Number: " + userRecord.phoneNumber) : null;
                         console.log("\n\n");
+
+                        return userRecord;
                     })
                     .catch(function (error) {
                         //errors already handled at validations step for answers to questions
@@ -292,8 +299,8 @@ function phoneExistence(loginAccount, cb1, cb2) { //cb is short for callback
 
 
 function emailExists(userRecord) {
-    user = userRecord; //only purpose of this to have the user object available globally, just in case it's needed
-    //console.log("user:\n" + JSON.stringify(user)); //for debugging
+    userEmail = userRecord.email;
+    //console.log("user:\n" + JSON.stringify(userRecord)); //for debugging
     return true;
 }
 
