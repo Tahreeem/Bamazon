@@ -45,7 +45,7 @@ function questionOneHandling(resultZero) {
             .then(function (answerOne) {
 
                 if (answerOne.quantity > resultZero[0].stock_quantity) {
-                    console.log(`Insufficient quantity of product available: only ${resultZero[0].stock_quantity} units available. Please enter a lower number...`);
+                    console.log(`Insufficient quantity of product available: only ${resultZero[0].stock_quantity} units available. Please enter a lower number...\n`);
                     resolve(questionOneHandling(resultZero));
                 }
                 else {
