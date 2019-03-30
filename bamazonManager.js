@@ -39,7 +39,8 @@ function managerActions() {
                         .then((products) => {
 
                             if (products.length == 0) {
-                                return "There are no products with an inventory count of lower than 5...";
+                                console.log("There are no products with an inventory count of lower than 5...");
+                                return;
                             }
                             else {
                                 console.log("\nHere are all the products with an inventory count of lower than 5:");
@@ -70,7 +71,7 @@ function managerActions() {
                         });
                     });
             }
-            
+
         });
 }
 
